@@ -1,4 +1,5 @@
 <section class="cr-detail">
+	<p *ngIf="state.status === 'idle' || state.status === 'empty'" class="cr-detail__empty">Select a change request to review.</p>
 	<p *ngIf="state.status === 'loading'" class="cr-detail__loading" role="status">Loading change request…</p>
 
 	<div *ngIf="state.status === 'error'" class="cr-detail__error" role="alert">
@@ -11,24 +12,36 @@
 			<h2>{{ cr.title }}</h2>
 			<span class="cr-status" [attr.data-status]="cr.status">{{ cr.status }}</span>
 			<p class="cr-detail__totals">
-				{{ fmt(cr.baselineTotal) }} → {{ fmt(cr.newTotal) }}
-				<strong class="cr-detail__delta">(Δ {{ fmt(cr.delta) }})</strong>
+				Baseline: {{ fmt(cr.baselineTotal) }} → Proposed: {{ fmt(cr.newTotal) }}
+				<strong class="cr-detail__delta">(Delta: {{ fmt(cr.delta) }})</strong>
 			</p>
 		</header>
 
 		<!-- Diff / preview panel -->
 		<section class="cr-diff">
 			<h3>Proposed changes</h3>
-			<table class="cr-diff__table">
+			<p *ngIf="diff.length === 0" class="cr-diff__empty">No line items to compare.</p>
+			<table *ngIf="diff.length > 0" class="cr-diff__table">
 				<thead>
-					<tr><th>SKU</th><th>Change</th><th>Before</th><th>After</th></tr>
+					<tr>
+						<th>SKU</th>
+						<th>Change</th>
+						<th>Before</th>
+						<th>After</th>
+					</tr>
 				</thead>
 				<tbody>
 					<tr *ngFor="let row of diff" class="cr-diff__row" [attr.data-kind]="row.kind">
 						<td>{{ row.sku }}</td>
 						<td class="cr-diff__kind">{{ row.kind }}</td>
-						<td>{{ row.baseline ? row.baseline.quantity + ' × ' + fmt(row.baseline.unitPrice) : '—' }}</td>
-						<td>{{ row.proposed ? row.proposed.quantity + ' × ' + fmt(row.proposed.unitPrice) : '—' }}</td>
+						<td>
+							<span *ngIf="row.baseline" class="cr-diff__description">{{ row.baseline.description }}<br /></span>
+							{{ row.baseline ? row.baseline.quantity + ' × ' + fmt(row.baseline.unitPrice) : '—' }}
+						</td>
+						<td>
+							<span *ngIf="row.proposed" class="cr-diff__description">{{ row.proposed.description }}<br /></span>
+							{{ row.proposed ? row.proposed.quantity + ' × ' + fmt(row.proposed.unitPrice) : '—' }}
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -37,7 +50,8 @@
 		<!-- Approval timeline -->
 		<section class="cr-timeline">
 			<h3>Timeline</h3>
-			<ol class="cr-timeline__list">
+			<p *ngIf="timeline.length === 0" class="cr-timeline__empty">No approval history yet.</p>
+			<ol *ngIf="timeline.length > 0" class="cr-timeline__list">
 				<li *ngFor="let entry of timeline" class="cr-timeline__entry">
 					<span class="cr-timeline__action">{{ entry.action }}</span>
 					<span class="cr-timeline__by">{{ entry.byUserId }}</span>
@@ -51,19 +65,20 @@
 		<section class="cr-actions">
 			<p *ngIf="actionError" class="cr-actions__error" role="alert">{{ actionError }}</p>
 
-			<button *ngIf="canApprove" type="button" class="cr-actions__approve" [disabled]="submitting" (click)="approve()">
-				Approve
-			</button>
+			<button *ngIf="canApprove" type="button" class="cr-actions__approve" [disabled]="submitting" (click)="approve()">Approve</button>
 
 			<div class="cr-actions__reject" *ngIf="canReject">
 				<label>
 					Reason for rejection
 					<textarea class="cr-actions__reason" [formControl]="rejectControl"></textarea>
 				</label>
-				<p *ngIf="rejectControl.invalid && rejectControl.touched" class="cr-actions__reason-error" role="alert">
-					Please enter a reason.
-				</p>
-				<button type="button" class="cr-actions__reject-btn" [disabled]="!canReject || submitting || rejectControl.invalid" (click)="reject()">
+				<p *ngIf="rejectControl.invalid && rejectControl.touched" class="cr-actions__reason-error" role="alert">Please enter a reason.</p>
+				<button
+					type="button"
+					class="cr-actions__reject-btn"
+					[disabled]="!canReject || submitting || rejectControl.invalid"
+					(click)="reject()"
+				>
 					Reject
 				</button>
 			</div>

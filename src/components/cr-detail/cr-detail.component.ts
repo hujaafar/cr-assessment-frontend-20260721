@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CrApiService } from '../../api/cr-api.service';
@@ -11,8 +11,7 @@ import { canApprovePolicy } from '../../common/permissions';
 
 /**
  * Change Request DETAIL page: loads a CR and renders the diff/preview, the approval timeline, and
- * permission-aware Approve/Reject actions. `load`, the diff binding, and the template skeleton are
- * provided; the timeline ordering, permission gating, actions, and reject validation are yours.
+ * permission-aware Approve/Reject actions.
  */
 @Component({
 	selector: 'app-cr-detail',
@@ -20,7 +19,7 @@ import { canApprovePolicy } from '../../common/permissions';
 	imports: [CommonModule, ReactiveFormsModule],
 	templateUrl: './cr-detail.component.html',
 })
-export class CrDetailComponent implements OnInit {
+export class CrDetailComponent implements OnChanges, OnDestroy {
 	@Input() id!: string;
 
 	state: ViewState<CrDetail> = idle();
@@ -28,22 +27,34 @@ export class CrDetailComponent implements OnInit {
 	actionError?: string;
 	// TODO: add validation so the form is invalid until a reason is entered.
 	rejectControl = new FormControl('', { nonNullable: true });
+	private loadVersion = 0;
 
 	constructor(private readonly api: CrApiService, private readonly session: SessionService) {}
 
-	ngOnInit(): void {
+	ngOnChanges(): void {
 		void this.load();
 	}
 
 	async load(): Promise<void> {
-		this.state = loading();
+		const version = ++this.loadVersion;
+		const user = this.session.user;
+		this.state = this.id ? loading() : { status: 'empty', data: null };
 		this.actionError = undefined;
+		this.rejectControl.reset();
+		this.submitting = false;
+		if (!this.id) return;
 		try {
-			const detail = await this.api.getChangeRequest(this.session.user, this.id);
+			const detail = await this.api.getChangeRequest(user, this.id);
+			if (version !== this.loadVersion || user !== this.session.user) return;
 			this.state = { status: 'loaded', data: detail };
 		} catch (err) {
+			if (version !== this.loadVersion || user !== this.session.user) return;
 			this.state = { status: 'error', data: null, error: (err as Error).message };
 		}
+	}
+
+	ngOnDestroy(): void {
+		this.loadVersion++;
 	}
 
 	get detail(): CrDetail | null {
@@ -56,8 +67,7 @@ export class CrDetailComponent implements OnInit {
 
 	/** Approval timeline, oldest-first. */
 	get timeline(): TimelineEntry[] {
-		// TODO: return the audit entries ordered chronologically (oldest first).
-		return this.detail?.audit ?? [];
+		return [...(this.detail?.audit ?? [])].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
 	}
 
 	/** Whether the current user may approve the loaded CR. */

@@ -31,7 +31,8 @@ The session supplies the acting user; decision availability depends on that user
 -
 
 ## 6. Where I used AI
-- OpenAI Codex read the assessment and scaffold, planned the stages, and wrote the diff and permission fixes, the list filter and states, and their tests.
+- OpenAI Codex read the assessment and scaffold, planned the stages, and wrote the diff and permission fixes, list filter and states,
+  detail preview and timeline, request-selection handling, and their tests.
   Codex also drafted these notes and ran verification commands. AI contributions will be updated as the remaining stages are completed.
 - The candidate still needs to review and understand the submitted code and record the walkthrough; those steps have not been performed by Codex.
 
