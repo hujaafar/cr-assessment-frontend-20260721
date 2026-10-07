@@ -9,10 +9,10 @@
 -
 
 ## 2. Component & state model
-<!-- The screens, the view-state each component exposes, and how data flows from the mock API into the
-template. -->
-
--
+The list loads the current user's organization and keeps the selected status filter separate from the API data.
+The detail screen loads one request and shows its before/after items, totals, history, and available decisions.
+Both screens expose an explicit view state so the template can show loading, data, an empty result, or an error.
+The session supplies the acting user; decision availability depends on that user's policies and the request status.
 
 ## 3. Invariants I keep
 <!-- Which properties the UI guarantees, and where in the component/template each is enforced. -->
@@ -31,7 +31,9 @@ template. -->
 -
 
 ## 6. Where I used AI
--
+- OpenAI Codex read the assessment and scaffold, planned the stages, and wrote the diff and permission fixes and their tests.
+  Codex also drafted these notes and ran verification commands. AI contributions will be updated as the remaining stages are completed.
+- The candidate still needs to review and understand the submitted code and record the walkthrough; those steps have not been performed by Codex.
 
 ## 7. What I'd improve with more time
 -
