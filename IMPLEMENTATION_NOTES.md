@@ -47,8 +47,10 @@ Zone's async tracking; the app stays ES2022, following the [Jest Angular preset 
 
 `npm test`, `npm run typecheck`, `npm run build`, `npm run lint`, `npm run format`, and `npm run format:check` passed with Node 18.20.3.
 The formatter only wrapped existing long lines in the mock service and fixtures; their behavior is unchanged. Browser checks confirmed filtering, selection,
-whitespace validation, slow rejection, failed approval reconciliation, viewer restrictions, and organization isolation.
-Clean-clone installation and testing are still being checked. Cross-browser regression testing and a real backend are outside this exercise.
+whitespace validation, slow rejection, failed approval reconciliation, load-error Retry, viewer restrictions, and organization isolation.
+A fresh Windows clone passed `npm ci`, all 84 tests, typecheck, lint, format check, and production build on 8 October 2026; its Git worktree stayed clean.
+The first clone exposed CRLF checkout differences, so I added `.gitattributes` to keep text files in LF and verified another fresh clone.
+Cross-browser regression testing and a real backend remain unverified.
 
 ## 5. Assumptions and decisions
 

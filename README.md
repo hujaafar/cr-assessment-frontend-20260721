@@ -92,7 +92,9 @@ npm run lint
 npm run format:check
 ```
 
-Final verification results are recorded after the clean-clone check.
+Verified on 8 October 2026 with Node 18.20.3: a fresh Windows clone passed `npm ci`, all **84 tests**
+across five suites, typecheck, production build, lint (no warnings), and format check. The worktree
+remained clean. `.gitattributes` keeps text line endings consistent after checkout.
 
 Read [LEARNING_GUIDE.md](./LEARNING_GUIDE.md) for the data flow, small changes to practice without AI,
 and a 5–8 minute walkthrough outline. Before submission, review all code and the notes yourself,
