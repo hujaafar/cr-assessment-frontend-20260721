@@ -54,9 +54,13 @@
 			<ol *ngIf="timeline.length > 0" class="cr-timeline__list">
 				<li *ngFor="let entry of timeline" class="cr-timeline__entry">
 					<span class="cr-timeline__action">{{ entry.action }}</span>
+					·
 					<span class="cr-timeline__by">{{ entry.byUserId }}</span>
+					·
 					<span class="cr-timeline__at">{{ entry.at }}</span>
-					<span *ngIf="entry.note" class="cr-timeline__note">{{ entry.note }}</span>
+					<ng-container *ngIf="entry.note">
+						· <span class="cr-timeline__note">{{ entry.note }}</span></ng-container
+					>
 				</li>
 			</ol>
 		</section>
@@ -64,15 +68,25 @@
 		<!-- Actions -->
 		<section class="cr-actions">
 			<p *ngIf="actionError" class="cr-actions__error" role="alert">{{ actionError }}</p>
+			<p *ngIf="submitting" class="cr-actions__pending" role="status">Saving decision…</p>
 
 			<button *ngIf="canApprove" type="button" class="cr-actions__approve" [disabled]="submitting" (click)="approve()">Approve</button>
 
 			<div class="cr-actions__reject" *ngIf="canReject">
 				<label>
 					Reason for rejection
-					<textarea class="cr-actions__reason" [formControl]="rejectControl"></textarea>
+					<textarea
+						class="cr-actions__reason"
+						[formControl]="rejectControl"
+						[readonly]="submitting"
+						required
+						[attr.aria-invalid]="rejectControl.invalid && rejectControl.touched"
+						[attr.aria-describedby]="rejectControl.invalid && rejectControl.touched ? 'reject-reason-error' : null"
+					></textarea>
 				</label>
-				<p *ngIf="rejectControl.invalid && rejectControl.touched" class="cr-actions__reason-error" role="alert">Please enter a reason.</p>
+				<p *ngIf="rejectControl.invalid && rejectControl.touched" id="reject-reason-error" class="cr-actions__reason-error" role="alert">
+					Please enter a reason.
+				</p>
 				<button
 					type="button"
 					class="cr-actions__reject-btn"

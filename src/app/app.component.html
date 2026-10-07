@@ -1,14 +1,28 @@
 <header class="app-header">
 	<h1>Change Request Review</h1>
-	<label>
-		Acting as:
-		<select (change)="switchUser($any($event.target).value)">
-			<option *ngFor="let key of userKeys" [value]="key" [selected]="session.user.id === users[key]?.id">{{ key }}</option>
-		</select>
-	</label>
+	<div class="app-controls">
+		<label>
+			Acting as:
+			<select class="app-user" (change)="switchUser($any($event.target).value)">
+				<option *ngFor="let key of userKeys" [value]="key" [selected]="session.user.id === users[key]?.id">{{ key }}</option>
+			</select>
+		</label>
+		<label>
+			Response delay:
+			<select class="app-delay" [value]="api.latencyMs" (change)="setDelay($any($event.target).value)">
+				<option value="0">None</option>
+				<option value="1000">1 second</option>
+				<option value="3000">3 seconds</option>
+			</select>
+		</label>
+		<button type="button" class="app-fail-next" [disabled]="api.failNext" (click)="api.failNext = true">
+			{{ api.failNext ? 'Failure armed' : 'Fail next response' }}
+		</button>
+	</div>
 </header>
 
 <main class="app-layout" *ngIf="show">
-	<app-cr-list (select)="onSelect($event)"></app-cr-list>
-	<app-cr-detail *ngIf="selectedId" [id]="selectedId"></app-cr-detail>
+	<app-cr-list #requestList (select)="onSelect($event)"></app-cr-list>
+	<app-cr-detail *ngIf="selectedId" [id]="selectedId" (changed)="requestList.load()"></app-cr-detail>
+	<p *ngIf="!selectedId" class="app-selection-empty">Select a change request to review its proposed changes and history.</p>
 </main>

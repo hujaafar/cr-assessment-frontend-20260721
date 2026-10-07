@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CrApiService } from '../../api/cr-api.service';
@@ -21,13 +21,17 @@ import { canApprovePolicy } from '../../common/permissions';
 })
 export class CrDetailComponent implements OnChanges, OnDestroy {
 	@Input() id!: string;
+	@Output() changed = new EventEmitter<void>();
 
 	state: ViewState<CrDetail> = idle();
 	submitting = false;
 	actionError?: string;
-	// TODO: add validation so the form is invalid until a reason is entered.
-	rejectControl = new FormControl('', { nonNullable: true });
+	rejectControl = new FormControl('', {
+		nonNullable: true,
+		validators: [(control) => (control.value.trim() ? null : { required: true })],
+	});
 	private loadVersion = 0;
+	private destroyed = false;
 
 	constructor(private readonly api: CrApiService, private readonly session: SessionService) {}
 
@@ -54,6 +58,7 @@ export class CrDetailComponent implements OnChanges, OnDestroy {
 	}
 
 	ngOnDestroy(): void {
+		this.destroyed = true;
 		this.loadVersion++;
 	}
 
@@ -73,6 +78,7 @@ export class CrDetailComponent implements OnChanges, OnDestroy {
 	/** Whether the current user may approve the loaded CR. */
 	get canApprove(): boolean {
 		return (
+			!this.destroyed &&
 			this.state.status === 'loaded' &&
 			this.detail?.status === 'PENDING_APPROVAL' &&
 			this.detail.orgCode === this.session.user.orgCode &&
@@ -89,13 +95,55 @@ export class CrDetailComponent implements OnChanges, OnDestroy {
 	}
 
 	async approve(): Promise<void> {
-		// TODO: perform the approve action through the API and reflect the outcome in the view.
-		throw new Error('approve() not implemented');
+		if (!this.canApprove || this.submitting) return;
+		await this.submitDecision('approve');
 	}
 
 	async reject(): Promise<void> {
-		// TODO: require a valid rejectControl, then perform the reject action through the API and
-		//       reflect the outcome in the view.
-		throw new Error('reject() not implemented');
+		if (!this.canReject || this.submitting) return;
+		this.rejectControl.markAsTouched();
+		if (this.rejectControl.invalid) return;
+		await this.submitDecision('reject');
+	}
+
+	/** Both decisions share the same pending and error handling. */
+	private async submitDecision(action: 'approve' | 'reject'): Promise<void> {
+		const id = this.detail.id;
+		const user = this.session.user;
+		const version = this.loadVersion;
+		const isCurrent = () => version === this.loadVersion && user === this.session.user;
+		const at = new Date().toISOString();
+		const reason = this.rejectControl.value.trim();
+		this.submitting = true;
+		this.actionError = undefined;
+		try {
+			const updated = action === 'approve' ? await this.api.approve(user, id, at) : await this.api.reject(user, id, at, reason);
+			if (!isCurrent()) return;
+			this.state = { status: 'loaded', data: updated };
+			this.rejectControl.reset();
+		} catch (err) {
+			if (!isCurrent()) return;
+			const label = action === 'approve' ? 'Approval' : 'Rejection';
+			this.actionError = `${label} response failed: ${(err as Error).message}.`;
+			// The mock can save a decision before its response fails. Verify the outcome before allowing another action.
+			try {
+				const latest = await this.api.getChangeRequest(user, id);
+				if (!isCurrent()) return;
+				this.state = { status: 'loaded', data: latest };
+				this.actionError += ' Showing the latest request status.';
+				if (latest.status !== 'PENDING_APPROVAL') this.rejectControl.reset();
+			} catch (refreshError) {
+				if (!isCurrent()) return;
+				this.state = {
+					status: 'error',
+					data: null,
+					error: `Couldn't verify the decision: ${(refreshError as Error).message}. Retry to check its status before acting again.`,
+				};
+			}
+		} finally {
+			if (isCurrent()) this.submitting = false;
+			// A completed decision can affect the list even when the user has selected a different request.
+			if (!this.destroyed && user === this.session.user) this.changed.emit();
+		}
 	}
 }
