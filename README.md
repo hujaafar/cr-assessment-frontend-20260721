@@ -67,7 +67,9 @@ The visible tests are a starting point, not the full specification.
 Component tests use `TestBed` and assert on rendered DOM. The mock API resolves on a timer. Most new
 tests use `fakeAsync` and `tick()` to advance it deterministically, followed by `detectChanges()` to
 update the DOM. The test-only TypeScript target is ES2016 for Zone's async tracking; the app remains
-ES2022. Detail tests use `componentRef.setInput()` to exercise Angular's `ngOnChanges` lifecycle.
+ES2022. The seven original scaffold tests are unchanged in their original files. Additional coverage is
+in `.additional.spec.ts`, the actions suite, and the shell suite. Detail tests cover direct initial ID
+assignment as well as `componentRef.setInput()`, with one initial API call and subsequent input reloads.
 
 ### Failed decisions
 
@@ -92,9 +94,15 @@ npm run lint
 npm run format:check
 ```
 
-Verified on 8 October 2026 with Node 18.20.3: a fresh Windows clone passed `npm ci`, all **84 tests**
-across five suites, typecheck, production build, lint (no warnings), and format check. The worktree
-remained clean. `.gitattributes` keeps text line endings consistent after checkout.
+Verified on 8 October 2026 with Node 18.20.3: all **seven original tests** passed unchanged when run
+separately, and the full suite passed **87 tests across eight suites**. Typecheck, production build,
+lint (no warnings), and format check passed. `.gitattributes` keeps text line endings consistent after checkout.
+
+To run only the untouched scaffold tests:
+
+```bash
+npm test -- --runTestsByPath src/components/diff.spec.ts src/components/cr-list/cr-list.component.spec.ts src/components/cr-detail/cr-detail.component.spec.ts
+```
 
 Read [LEARNING_GUIDE.md](./LEARNING_GUIDE.md) for the data flow, small changes to practice without AI,
 and a 5–8 minute walkthrough outline. Before submission, review all code and the notes yourself,
@@ -113,9 +121,12 @@ src/
     diff.util.ts                   # baseline-vs-proposed line-item diff
     cr-list/cr-list.component.{ts,html}
     cr-detail/cr-detail.component.{ts,html}
-    diff.spec.ts                           # pure diff cases
-    cr-list/cr-list.component.spec.ts       # list DOM and state tests
-    cr-detail/cr-detail.component.spec.ts   # detail preview, state, permission tests
+    diff.spec.ts                           # original scaffold diff tests
+    diff.additional.spec.ts                # additional pure diff cases
+    cr-list/cr-list.component.spec.ts       # original scaffold list tests
+    cr-list/cr-list.component.additional.spec.ts # additional list DOM and state tests
+    cr-detail/cr-detail.component.spec.ts   # original scaffold detail tests
+    cr-detail/cr-detail.component.additional.spec.ts # preview, lifecycle, state, permission tests
     cr-detail/cr-detail.actions.spec.ts     # decisions, validation, slow/error cases
   app/app.component.spec.ts                # selection, role, and list-refresh integration
 ```

@@ -70,7 +70,9 @@
 			<p *ngIf="actionError" class="cr-actions__error" role="alert">{{ actionError }}</p>
 			<p *ngIf="submitting" class="cr-actions__pending" role="status">Saving decision…</p>
 
-			<button *ngIf="canApprove" type="button" class="cr-actions__approve" [disabled]="submitting" (click)="approve()">Approve</button>
+			<button type="button" class="cr-actions__approve" [hidden]="!canApprove" [disabled]="!canApprove || submitting" (click)="approve()">
+				Approve
+			</button>
 
 			<div class="cr-actions__reject" *ngIf="canReject">
 				<label>

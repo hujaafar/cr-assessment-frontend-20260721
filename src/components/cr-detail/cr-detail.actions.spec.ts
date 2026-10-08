@@ -66,7 +66,8 @@ describe('CrDetailComponent decisions', () => {
 		]);
 		expect(component.rejectControl.value).toBe('');
 		expect(changed).toHaveBeenCalledTimes(1);
-		expect(fixture.nativeElement.querySelector('.cr-actions__approve')).toBeNull();
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').hidden).toBe(true);
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').disabled).toBe(true);
 		expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
 		expect(fixture.nativeElement.querySelector('.cr-actions__pending')).toBeNull();
 	}));
@@ -110,7 +111,8 @@ describe('CrDetailComponent decisions', () => {
 		expect(fixture.nativeElement.querySelector('.cr-timeline__note').textContent).toBe('Please revise the quantity.');
 		expect(component.rejectControl.value).toBe('');
 		expect(changed).toHaveBeenCalledTimes(1);
-		expect(fixture.nativeElement.querySelector('.cr-actions__approve')).toBeNull();
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').hidden).toBe(true);
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').disabled).toBe(true);
 		expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
 	}));
 
@@ -138,6 +140,10 @@ describe('CrDetailComponent decisions', () => {
 		const api = TestBed.inject(CrApiService);
 		const approve = jest.spyOn(api, 'approve');
 		const reject = jest.spyOn(api, 'reject');
+		const approveButton = fixture.nativeElement.querySelector('.cr-actions__approve') as HTMLButtonElement;
+		expect(approveButton.hidden).toBe(true);
+		expect(approveButton.disabled).toBe(true);
+		approveButton.click();
 		fixture.componentInstance.rejectControl.setValue('A valid reason');
 		void fixture.componentInstance.approve();
 		void fixture.componentInstance.reject();
@@ -214,7 +220,8 @@ describe('CrDetailComponent decisions', () => {
 					`${label} response failed: Network error. Showing the latest request status.`,
 				);
 				expect(fixture.nativeElement.querySelector('.cr-actions__error').getAttribute('role')).toBe('alert');
-				expect(fixture.nativeElement.querySelector('.cr-actions__approve')).toBeNull();
+				expect(fixture.nativeElement.querySelector('.cr-actions__approve').hidden).toBe(true);
+				expect(fixture.nativeElement.querySelector('.cr-actions__approve').disabled).toBe(true);
 				expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
 				expect(changed).toHaveBeenCalledTimes(1);
 			})();
@@ -244,7 +251,8 @@ describe('CrDetailComponent decisions', () => {
 		expect(refresh).toHaveBeenCalledTimes(2);
 		expect(fixture.nativeElement.querySelector('.cr-detail__error')).toBeNull();
 		expect(fixture.nativeElement.querySelector('.cr-detail__header .cr-status').textContent).toBe('APPROVED');
-		expect(fixture.nativeElement.querySelector('.cr-actions__approve')).toBeNull();
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').hidden).toBe(true);
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').disabled).toBe(true);
 	}));
 
 	it('preserves the reason and permits a retry if rejection failed before saving', fakeAsync(() => {
@@ -348,7 +356,8 @@ describe('CrDetailComponent decisions', () => {
 			expect(component.actionError).toBeUndefined();
 			expect(refresh).not.toHaveBeenCalled();
 			expect(changed).not.toHaveBeenCalled();
-			expect(fixture.nativeElement.querySelector('.cr-actions__approve')).toBeNull();
+			expect(fixture.nativeElement.querySelector('.cr-actions__approve').hidden).toBe(true);
+			expect(fixture.nativeElement.querySelector('.cr-actions__approve').disabled).toBe(true);
 			expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
 		})();
 	});

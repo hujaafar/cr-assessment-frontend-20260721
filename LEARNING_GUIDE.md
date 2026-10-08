@@ -5,7 +5,8 @@
 1. The list's `ngOnInit()` calls `load()`: show loading, await the API, then store loaded/empty/error state.
 2. Its template uses `*ngIf` to select the content. `visibleRows` filters loaded data; changing status does not call the API.
 3. Selecting a request emits its ID. The shell stores `selectedId` and passes it to the detail through `[id]`.
-4. The detail's `ngOnChanges()` loads that ID. Getters derive the diff, sorted history, and permitted actions from its data.
+4. The detail's `ngOnChanges()` loads that ID and later changes. `ngOnInit()` supplies a fallback for a directly assigned initial ID,
+   only if no load has started. Getters derive the diff, sorted history, and permitted actions from its data.
 5. A decision method checks permissions/status; rejection also checks the reason. It sets `submitting` before the API call.
 6. Both buttons are disabled while saving. Success replaces the detail; a failed response triggers a read to confirm the outcome.
 7. The detail emits `changed`. The shell reloads the existing list, updating its statuses while preserving the filter.

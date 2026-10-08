@@ -83,7 +83,8 @@ describe('AppComponent integration', () => {
 		tick(0);
 		fixture.detectChanges();
 		expect(fixture.nativeElement.querySelector('.cr-detail__header h2').textContent).toContain('Add 1 unit of SKU-A');
-		expect(fixture.nativeElement.querySelector('.cr-actions__approve')).toBeNull();
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').hidden).toBe(true);
+		expect(fixture.nativeElement.querySelector('.cr-actions__approve').disabled).toBe(true);
 		expect(fixture.nativeElement.querySelector('.cr-actions__reject')).toBeNull();
 	}));
 

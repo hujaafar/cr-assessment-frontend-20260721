@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CrApiService } from '../../api/cr-api.service';
@@ -19,7 +19,7 @@ import { canApprovePolicy } from '../../common/permissions';
 	imports: [CommonModule, ReactiveFormsModule],
 	templateUrl: './cr-detail.component.html',
 })
-export class CrDetailComponent implements OnChanges, OnDestroy {
+export class CrDetailComponent implements OnChanges, OnDestroy, OnInit {
 	@Input() id!: string;
 	@Output() changed = new EventEmitter<void>();
 
@@ -37,6 +37,11 @@ export class CrDetailComponent implements OnChanges, OnDestroy {
 
 	ngOnChanges(): void {
 		void this.load();
+	}
+
+	ngOnInit(): void {
+		// Input binding loads through ngOnChanges first; direct initial assignment needs this fallback.
+		if (this.loadVersion === 0) void this.load();
 	}
 
 	async load(): Promise<void> {

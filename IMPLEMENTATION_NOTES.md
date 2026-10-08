@@ -17,6 +17,8 @@ The list loads the current user's organization and keeps its selected filter sep
 The detail loads one request and displays its preview, totals, history, and permitted decisions.
 Both components expose a `ViewState` that the template uses for loading, loaded, empty, or error content.
 The shell holds the selected ID, reads the acting user from `SessionService`, and connects selection and list-refresh events.
+`ngOnChanges` loads bound IDs and subsequent changes. `ngOnInit` loads a directly assigned initial ID only when no load has started,
+so the original test setup works without making duplicate initial API calls.
 
 I kept decision state separate from loading state: `submitting` disables controls while leaving the preview visible, and
 `actionError` reports a failed response. `rejectControl` holds the reason, validity, and touched state.
@@ -27,7 +29,7 @@ Switching users clears selection and recreates both panes; destroying a componen
 
 | Invariant | How and where |
 |---|---|
-| Both status and permission are required | `canApprove`/`canReject`, hidden controls, and guards in both action methods |
+| Both status and permission are required | `canApprove`/`canReject`, hidden and disabled Approve, conditional Reject, and guards in both action methods |
 | One decision at a time in the current view | `submitting` is set before awaiting; methods guard it and both buttons are disabled |
 | Rejection has a meaningful reason | Trim-aware validator, disabled Reject, method validation, and trimmed API argument |
 | A failed response cannot cause a blind repeat | Refresh while still submitting; show Retry with no actions if verification fails |
@@ -37,7 +39,10 @@ Switching users clears selection and recreates both panes; destroying a componen
 
 ## 4. Testing and verification
 
-The suite passes **84 tests across five suites**. Pure tests cover diff classification and input preservation.
+The suite passes **87 tests across eight suites**, including all seven original scaffold tests unchanged in their original files.
+The original three spec files match commit `db9d76b` byte for byte and also pass when run separately.
+I kept extra coverage in `.additional.spec.ts`, the decision suite, and the shell suite. Lifecycle spies verify one initial API call
+for direct assignment or `setInput`, followed by one call for each subsequent input change. Pure tests cover diff classification and input preservation.
 DOM tests cover list states/filtering, preview values, totals, history, permissions, validation, and decision outcomes.
 Shell integration tests cover selection, role switching, list refresh, and mock controls.
 
@@ -45,11 +50,12 @@ I used `latencyMs`/`failNext` with Angular `fakeAsync`/`tick` so slow/error test
 Spies cover failure before saving and failure of the verification fetch. The test-only TypeScript target is ES2016 for
 Zone's async tracking; the app stays ES2022, following the [Jest Angular preset guidance](https://thymikee.github.io/jest-preset-angular/docs/getting-started/installation).
 
-`npm test`, `npm run typecheck`, `npm run build`, `npm run lint`, `npm run format`, and `npm run format:check` passed with Node 18.20.3.
+The original-test run, `npm test`, `npm run typecheck`, `npm run build`, `npm run lint`, and `npm run format:check` passed with Node 18.20.3 on 8 October 2026.
 The formatter only wrapped existing long lines in the mock service and fixtures; their behavior is unchanged. Browser checks confirmed filtering, selection,
 whitespace validation, slow rejection, failed approval reconciliation, load-error Retry, viewer restrictions, and organization isolation.
-A fresh Windows clone passed `npm ci`, all 84 tests, typecheck, lint, format check, and production build on 8 October 2026; its Git worktree stayed clean.
-The first clone exposed CRLF checkout differences, so I added `.gitattributes` to keep text files in LF and verified another fresh clone.
+The original-test compatibility correction keeps Approve in the loaded DOM but hides and disables it when permission or status forbids it.
+The action-method guard still blocks direct calls. Browser checks confirmed `hidden: true`, `disabled: true`, and `display: none` for a viewer.
+`.gitattributes` keeps text files in LF after a Windows checkout, so formatting does not depend on local Git line-ending settings.
 Cross-browser regression testing and a real backend remain unverified.
 
 ## 5. Assumptions and decisions
