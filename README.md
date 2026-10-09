@@ -1,92 +1,92 @@
-# Change Request Review UI — Frontend Exercise (Angular)
+# Change Request Review
 
-A small **Angular** exercise for a procurement platform. You'll complete the UI an approver uses to
-review and act on **Change Requests (CRs)** — proposed amendments to a live Purchase Agreement.
+My solution to the Angular frontend assessment. The app lets a reviewer see what a change request would
+alter in a purchase agreement, check its history, and approve or reject it.
 
-You do **not** build a backend. A mock API service (`src/api/cr-api.service.ts`) with realistic fixtures
-is provided; treat it as the contract your components talk to. Start with
-[`CANDIDATE_BRIEF.md`](./CANDIDATE_BRIEF.md) for the scenario, tasks, and acceptance criteria.
+It uses the supplied Angular 15 scaffold and mock API, with standalone components, reactive forms, and
+plain HTML/CSS. The mock keeps its data in memory, so refreshing the browser resets the requests.
 
-## Stack & setup
+## Walkthrough
 
-Angular 15 (standalone components, reactive forms). It's a real, runnable app: `npm start` serves the UI
-in a browser, and `npm test` renders the components via `jest-preset-angular` (TestBed in jsdom). Plain
-HTML/CSS.
+[Watch the recorded walkthrough](https://drive.google.com/file/d/1La3sDh78gIAxagpqtTA8qmYvAAs9w53e/view).
 
-```bash
-nvm use            # Node 18.20.3
-npm ci             # uses .npmrc (legacy-peer-deps) — please keep it
-npm start          # ng serve -> http://localhost:4200  (run the UI to click through / record your demo)
-npm test           # Jest — component/DOM, integration, and pure diff tests
-npm run build      # ng build (production)
-npm run lint
-npm run format     # applies the supplied Prettier conventions
-npm run format:check
-```
+## Run locally
 
-### Running the UI
-
-`npm start` boots a small demo shell (`src/app/`) that hosts the list + detail screens. Use the
-**"Acting as"** switcher in the header to change the current user (approver / viewer / otherOrg). Select
-a request after switching; the old selection is cleared. **Response delay** simulates a slow call, and
-**Fail next response** arms a single network failure. To demonstrate a load error, arm it and select a
-different request, then use Retry. Refreshing the browser resets the in-memory data. The shell is glue for the
-demo — the exercise itself is the list/detail components and their templates.
-
-## Policy-string convention
-
-The current user (from `SessionService`) carries permission strings shaped **`cr_{action}_{scope}`**:
-
-| action | meaning | | scope | meaning |
-|---|---|---|---|---|
-| `r` | read | | `u` | user — own CRs |
-| `a` | approve | | `w` | workspace |
-| `x` | apply | | `o` | org |
-
-e.g. `cr_a_o` = may approve any CR in the org; a user with only `cr_r_o` is read-only. The UI must only
-offer/enable an action the current user is actually permitted to perform.
-
-## CR statuses (read-only context)
-
-`DRAFT → SUBMITTED → PENDING_APPROVAL → APPROVED → APPLIED`, with `REJECTED` / `CANCELLED` terminal.
-Approve/Reject act on a `PENDING_APPROVAL` CR. You consume these statuses; you don't drive backend
-transitions.
-
-## Where to work
-
-- `src/components/cr-list/cr-list.component.{ts,html}` — API load states and local status filtering.
-- `src/components/cr-detail/cr-detail.component.{ts,html}` — preview, totals, timeline, permission checks,
-  decision state, reason validation, and failed-response recovery.
-- `src/components/diff.util.ts` — pure SKU comparison for quantity, price, and description changes.
-- `src/app/app.component.{ts,html}` — selection, role switching, mock controls, and list refresh after decisions.
-
-The visible tests are a starting point, not the full specification.
-
-## Testing components
-
-Component tests use `TestBed` and assert on rendered DOM. The mock API resolves on a timer. Most new
-tests use `fakeAsync` and `tick()` to advance it deterministically, followed by `detectChanges()` to
-update the DOM. The test-only TypeScript target is ES2016 for Zone's async tracking; the app remains
-ES2022. The seven original scaffold tests are unchanged in their original files. Additional coverage is
-in `.additional.spec.ts`, the actions suite, and the shell suite. Detail tests cover direct initial ID
-assignment as well as `componentRef.setInput()`, with one initial API call and subsequent input reloads.
-
-### Failed decisions
-
-The supplied mock saves a decision before its promise can fail. After a failed response the detail
-fetches the current request, reports the response error, and shows the confirmed status. It does not
-assume the request is still pending. If this verification also fails, only Retry is offered until the
-current status loads successfully. See [IMPLEMENTATION_NOTES.md](./IMPLEMENTATION_NOTES.md) for the
-permission scope assumptions and AI disclosure.
-
-### Verification and submission
-
-Use Node **18.20.3** from `.nvmrc`; check `node --version` before installing. Keep `.npmrc` and the lockfile.
-On Windows, run the same npm commands from PowerShell after selecting/installing Node 18. The assessment's
-existing dependencies produce npm deprecation/audit notices; no dependency versions were changed.
+Use **Node 18.20.3**, as specified in `.nvmrc`. Verification used npm **10.7.0**. After selecting the
+Node version, run these commands from the project folder:
 
 ```bash
 npm ci
+npm start
+```
+
+Open [localhost:4200](http://localhost:4200). Keep the supplied `.npmrc` and `package-lock.json`;
+installation relies on the existing peer-dependency settings. The scaffold's dependency versions
+are unchanged, including their existing deprecation and audit notices.
+
+## Try the app
+
+The list on the left shows requests for the current user's organization. Select a request to see its
+details on the right. The status filter narrows the list locally without another API call.
+
+Two useful examples:
+
+- **CR-1** increases SKU-A from 10 to 11 units. The total goes from USD 8,000 to USD 8,500.
+- **CR-2** changes an item's description while keeping its quantity and price the same. It still
+  appears as a changed item, with a delta of zero.
+
+The preview also handles added, removed, and unchanged items. The timeline shows events from oldest
+to newest.
+
+The header has a few controls for trying different situations:
+
+| Control | What to try |
+| --- | --- |
+| Acting as | Choose `viewer` to see read-only access, or `otherOrg` to see a separate organization's requests. Select a request after switching users. |
+| Response delay | Choose 3 seconds, then approve or reject a pending request. The preview stays visible while the decision is saving. |
+| Fail next response | Arm a single failure, then select a different request to see the error state. Retry loads it again. |
+
+Approval and rejection require both a pending request and the current user's approval permission.
+Rejection also needs a reason; an empty value or spaces alone will not enable it. A completed decision
+updates the detail and reloads the list while keeping its selected filter.
+
+Refresh the browser whenever you want to start again with the original demo data.
+
+## Handling a failed decision
+
+One detail of the supplied mock matters here: it saves a decision **before** its response can fail.
+A response error therefore does not prove that the decision failed.
+
+After a failed approval or rejection response, the app fetches the request again and displays its
+confirmed status alongside the error. If that check also fails, the screen offers Retry before any
+further decision. To see this behavior, open a pending request, arm **Fail next response**, and approve
+it. The response fails, but the refreshed status is approved.
+
+While a decision is in progress, `submitting` disables the controls and guards the action methods
+against another submission in the current view.
+
+## Code structure
+
+| File or folder | Responsibility |
+| --- | --- |
+| `src/app/` | Page layout, request selection, user switching, and demo controls |
+| `src/components/cr-list/` | List loading states and status filtering |
+| `src/components/cr-detail/` | Preview, totals, timeline, permissions, validation, and decisions |
+| `src/components/diff.util.ts` | Compare items by SKU, including quantity, price, and description changes |
+| `src/api/` | Supplied mock API and sample requests |
+| `src/session/` | Current user |
+| `src/common/` | View state, permission helpers, and currency formatting |
+| `src/models/` | Request, line item, user, and timeline types |
+
+The shell passes the selected request ID to the detail component. After a decision, the detail emits
+an event that tells the list to reload. Both components represent loading, loaded, empty, and error
+states explicitly. Detail loading and decision submission have separate state, so saving does not
+hide the preview. A load counter and a check of the current user prevent older responses from
+overwriting a newer selection.
+
+## Tests and checks
+
+```bash
 npm test
 npm run typecheck
 npm run build
@@ -94,44 +94,30 @@ npm run lint
 npm run format:check
 ```
 
-Verified on 8 October 2026 with Node 18.20.3: all **seven original tests** passed unchanged when run
-separately, and the full suite passed **87 tests across eight suites**. Typecheck, production build,
-lint (no warnings), and format check passed. `.gitattributes` keeps text line endings consistent after checkout.
+All checks passed on **8 October 2026** with Node 18.20.3. The test suite has **87 passing tests across
+eight suites**, including the seven original scaffold tests unchanged. Installation and tests were
+also verified from a clean clone. `.gitattributes` keeps line endings consistent after checkout.
 
-To run only the untouched scaffold tests:
+Coverage includes list filtering and states, diff classification, timeline order, permissions,
+rejection validation, slow and failed decisions, request selection, and user switching. Component
+tests use Jest and Angular TestBed to check rendered behavior. Slow-response tests use `fakeAsync`
+and `tick()` instead of waiting in real time.
+
+To run just the original tests:
 
 ```bash
 npm test -- --runTestsByPath src/components/diff.spec.ts src/components/cr-list/cr-list.component.spec.ts src/components/cr-detail/cr-detail.component.spec.ts
 ```
 
-Read [LEARNING_GUIDE.md](./LEARNING_GUIDE.md) for the data flow, small changes to practice without AI,
-and a 5–8 minute walkthrough outline. Before submission, review all code and the notes yourself,
-record the walkthrough (including rejection and an error), and share the repository with its full
-commit history according to the recruiting contact's delivery instructions. No remote has been configured.
+`npm run format` applies the project's formatting rules when making changes.
 
-## Files
+## Implementation notes and AI use
 
-```
-src/
-  models/cr.models.ts              # CrSummary, CrDetail, LineItem, TimelineEntry, ReqUser
-  common/                          # view-state, money.util, permissions (policy helpers)
-  api/                             # fixtures + CrApiService (mock, org-scoped, latency/failNext)
-  session/session.service.ts       # current user
-  components/
-    diff.util.ts                   # baseline-vs-proposed line-item diff
-    cr-list/cr-list.component.{ts,html}
-    cr-detail/cr-detail.component.{ts,html}
-    diff.spec.ts                           # original scaffold diff tests
-    diff.additional.spec.ts                # additional pure diff cases
-    cr-list/cr-list.component.spec.ts       # original scaffold list tests
-    cr-list/cr-list.component.additional.spec.ts # additional list DOM and state tests
-    cr-detail/cr-detail.component.spec.ts   # original scaffold detail tests
-    cr-detail/cr-detail.component.additional.spec.ts # preview, lifecycle, state, permission tests
-    cr-detail/cr-detail.actions.spec.ts     # decisions, validation, slow/error cases
-  app/app.component.spec.ts                # selection, role, and list-refresh integration
-```
+[IMPLEMENTATION_NOTES.md](./IMPLEMENTATION_NOTES.md) covers the state model, permission assumptions,
+testing choices, and limitations. The original requirements are in
+[CANDIDATE_BRIEF.md](./CANDIDATE_BRIEF.md).
 
-## A note on AI tools
+I used OpenAI Codex to assist with implementation, tests, and documentation. This included the diff and permission fixes, list filtering, detail preview and timeline, and approval/rejection behavior with validation and error handling.
 
-Using AI tools is allowed and expected — see the brief for the (light) disclosure policy. The follow-up
-interview is built around your own code, so make sure you understand what you submit.
+The app uses a mock API; a real backend and cross-browser regression testing are outside the work
+verified here.
