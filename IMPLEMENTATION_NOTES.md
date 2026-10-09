@@ -79,5 +79,7 @@ No required UI feature is intentionally deferred. The supplied Angular 15 depend
 reported 99 audit advisories (3 low, 18 moderate, 75 high, 3 critical). Upgrading that dependency set is outside the implementation scope.
 With more time, I would add browser regression tests, use a real API with server-enforced permissions and idempotency, and improve date/currency presentation.
 
-The 5–8 minute walkthrough recording and repository delivery are still pending. The recording must include a rejection,
-an error state, and one non-trivial implementation decision. No remote repository has been configured.
+## 8. Repository and walkthrough
+
+- [GitHub repository](https://github.com/hujaafar/cr-assessment-frontend-20260721), including the full commit history.
+- [Recorded walkthrough](https://drive.google.com/file/d/1La3sDh78gIAxagpqtTA8qmYvAAs9w53e/view).
